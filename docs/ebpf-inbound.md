@@ -189,7 +189,7 @@ the runner with `common/ebpf/check-kernel.sh` and marks the job SKIP when
 required BPF/cgroup features cannot be proven. GitHub-hosted runners are
 expected to SKIP because the probe cannot distinguish cgroup sockaddr attach
 subtypes without a real load. Run the real suite on a self-hosted Linux
-runner with cgroup v2, root access, and bpftool:
+runner with cgroup v2 and root access:
 
 ```bash
 bash common/ebpf/check-kernel.sh --mode all --cgroup /sys/fs/cgroup
@@ -197,6 +197,10 @@ SING_BOX_EBPF_INTEGRATION=1 CGO_ENABLED=1 go test -count=1 \
   -tags "with_gvisor with_ebpf ebpf_integration" \
   ./common/ebpf/... -run Integration
 ```
+
+Verified on 2026-08-08 on Debian Linux 6.16.11-x64v3-xanmod1 with cgroup2,
+root access, clang 14, and Go 1.26.5. All integration subtests passed:
+program load, traffic redirection, TGID self-bypass, and shared-network TC.
 
 The suite creates temporary cgroups, loads programs, attaches traffic
 helpers, and cleans up all state on completion. After stopping mihomo on the
