@@ -7,6 +7,11 @@ on:
         description: Upstream branch
         required: true
         default: Alpha
+      create_pull_request:
+        description: Create a pull request for the candidate branch
+        required: false
+        default: false
+        type: boolean
   schedule:
     - cron: "17 */6 * * *"
 
@@ -41,6 +46,15 @@ jobs:
           echo "branch=${branch}" >> "$GITHUB_OUTPUT"
           echo "run_url=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
 
+      - name: Resolve PR mode
+        id: pr-mode
+        shell: bash
+        run: |
+          if [ "${{ inputs.create_pull_request == true }}" = "true" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Fetch upstream
         shell: bash
         run: |
@@ -78,8 +92,15 @@ jobs:
           git push origin "HEAD:refs/heads/${candidate}"
           echo "candidate_branch=${candidate}" >> "$GITHUB_OUTPUT"
 
+      - name: Report candidate branch
+        if: steps.merge.outcome == 'success' && steps.pr-mode.outputs.enabled != 'true'
+        shell: bash
+        run: |
+          echo "Candidate branch pushed: automation/ebpf-${GITHUB_RUN_ID}"
+          echo "PR creation disabled by create_pull_request input."
+
       - name: Create or update pull request
-        if: steps.merge.outcome == 'success'
+        if: steps.merge.outcome == 'success' && steps.pr-mode.outputs.enabled == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -97,7 +118,7 @@ jobs:
           fi
 
       - name: Close stale sync failure issues
-        if: steps.merge.outcome == 'success'
+        if: steps.merge.outcome == 'success' && steps.pr-mode.outputs.enabled == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
