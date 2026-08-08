@@ -205,8 +205,10 @@ same host, verify `bpftool prog show`, `bpftool map show`, and
 
 ## Repository automation prerequisites
 
-The sync workflow creates PRs and failure Issues. The target repository must
-have:
+The sync workflow defaults to pushing a candidate branch without creating a
+PR. Set the `create_pull_request` workflow input to `true` only when PR
+creation is explicitly desired. Failure reporting still requires the target
+repository to have:
 
 - Issues enabled, otherwise the failure notification step exits with an
   actionable error instead of creating an Issue.
